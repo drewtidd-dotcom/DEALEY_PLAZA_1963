@@ -76,10 +76,10 @@ function points(o){return o.outer||o.polygon||o.points||o.path||null}
 function center(ps){let x=0,z=0;for(const p of ps){x+=p[0];z+=p[1]}return new B.Vector3(x/ps.length,0,z/ps.length)}
 function poly(name,ps,y,h,material){
  if(!ps||ps.length<3)return null;
- const shape=ps.map(p=>new B.Vector3(p[0],y,p[1]));
+ const shape=ps.map(p=>new B.Vector3(p[0],p[1],0));
  try{
   const builder=new B.PolygonMeshBuilder(name,shape,scene);
-  const mesh=builder.build(false,h||.02);mesh.material=material;return mesh;
+  const mesh=builder.build(false,h||.02);mesh.rotation.x=-Math.PI/2;mesh.position.y=y;mesh.material=material;return mesh;
  }catch(e){
   return null;
  }
