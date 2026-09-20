@@ -40,7 +40,7 @@ engine.enableOfflineSupport=false;
 const scene=new B.Scene(engine);
 scene.clearColor=new B.Color4(.53,.61,.67,1);
 scene.fogMode=B.Scene.FOGMODE_EXP2;scene.fogColor=new B.Color3(.53,.61,.67);scene.fogDensity=.0018;
-const camera=new B.UniversalCamera('Explorer',new B.Vector3(0,2.0,48),scene);
+const camera=new B.UniversalCamera('Explorer',new B.Vector3(0,4,30),scene);
 camera.minZ=.08;camera.maxZ=1200;camera.speed=.18;camera.inertia=.8;camera.angularSensibility=3600;camera.attachControl(canvas,true);
 const hemi=new B.HemisphericLight('Sky',new B.Vector3(0,1,0),scene);
 hemi.intensity=.72;hemi.diffuse=new B.Color3(.88,.91,.95);hemi.groundColor=new B.Color3(.23,.26,.22);
@@ -52,6 +52,10 @@ const pipe=new B.DefaultRenderingPipeline('RealTime',true,scene,[camera]);
 pipe.fxaaEnabled=true;pipe.imageProcessingEnabled=true;pipe.imageProcessing.exposure=1.0;pipe.imageProcessing.contrast=1.12;
 pipe.bloomEnabled=true;pipe.bloomThreshold=.92;pipe.bloomWeight=.045;pipe.bloomKernel=32;
 const shadow=new B.ShadowGenerator(1536,sun);shadow.useBlurExponentialShadowMap=true;shadow.blurKernel=18;shadow.bias=.0005;
+// Guaranteed visible fallback scene while the measured map loads.
+const fallbackGround=B.MeshBuilder.CreateGround('FallbackGround',{width:900,height:900},scene);fallbackGround.material=mats.street;
+const fallbackPlaza=B.MeshBuilder.CreateBox('FallbackPlaza',{width:90,height:.18,depth:90},scene);fallbackPlaza.position.y=.1;fallbackPlaza.material=mats.sidewalk;
+for(let i=-3;i<=3;i++){const b=B.MeshBuilder.CreateBox('FallbackBuilding',{width:12,height:8+(Math.abs(i)%3)*4,depth:12},scene);b.position.set(i*16,4+(Math.abs(i)%3)*2,-35);b.material=mats.stone;}
 
 const mats={};
 function M(n,c,r=.8,metal=0){const m=new B.PBRMaterial(n,scene);m.albedoColor=B.Color3.FromHexString(c);m.roughness=r;m.metallic=metal;m.environmentIntensity=.35;mats[n]=m;return m}
@@ -227,7 +231,7 @@ canvas.addEventListener('pointermove',e=>{if(e.pointerId===look.id){const dx=e.c
 function applyQuality(v){const s={Cinematic:[.85,true,.0012],High:[1.0,true,.0018],Balanced:[1.12,false,.0022],Performance:[1.28,false,.0028]}[v];engine.setHardwareScalingLevel(s[0]);pipe.bloomEnabled=s[1];scene.fogDensity=s[2];shadow.mapSize=v==='Cinematic'?2048:1536}
 quality.onchange=()=>applyQuality(quality.value);applyQuality('High');
 
-let frames=0;scene.onBeforeRenderObservable.add(()=>{const f=keys.w||keys.arrowup?-1:keys.s||keys.arrowdown?1:move.y;const str=keys.d||keys.arrowright?1:keys.a||keys.arrowleft?-1:move.x;const sp=keys.shift?camera.speed*1.7:camera.speed;let fw=camera.getDirection(B.Axis.Z);fw.y=0;fw.normalize();let rt=camera.getDirection(B.Axis.X);rt.y=0;rt.normalize();camera.position.addInPlace(fw.scale(-f*sp));camera.position.addInPlace(rt.scale(str*sp));camera.position.y=2.05;if(++frames%30===0)info.textContent='Dealey Plaza · 1963  |  '+Math.round(engine.getFps())+' FPS'});
+let frames=0;scene.onBeforeRenderObservable.add(()=>{const f=keys.w||keys.arrowup?-1:keys.s||keys.arrowdown?1:move.y;const str=keys.d||keys.arrowright?1:keys.a||keys.arrowleft?-1:move.x;const sp=keys.shift?camera.speed*1.7:camera.speed;let fw=camera.getDirection(B.Axis.Z);fw.y=0;fw.normalize();let rt=camera.getDirection(B.Axis.X);rt.y=0;rt.normalize();camera.position.addInPlace(fw.scale(-f*sp));camera.position.addInPlace(rt.scale(str*sp));camera.position.y=Math.max(1.6,camera.position.y);if(++frames%30===0)info.textContent='Dealey Plaza · 1963  |  '+Math.round(engine.getFps())+' FPS'});
 engine.runRenderLoop(()=>scene.render());addEventListener('resize',()=>engine.resize());
 })();
 </script>
