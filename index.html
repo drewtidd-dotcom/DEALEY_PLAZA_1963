@@ -40,7 +40,7 @@ engine.enableOfflineSupport=false;
 const scene=new B.Scene(engine);
 scene.clearColor=new B.Color4(.53,.61,.67,1);
 scene.fogMode=B.Scene.FOGMODE_EXP2;scene.fogColor=new B.Color3(.53,.61,.67);scene.fogDensity=.0018;
-const camera=new B.UniversalCamera('Explorer',new B.Vector3(0,4,30),scene);
+const camera=new B.UniversalCamera('Explorer',new B.Vector3(0,4,-32),scene);camera.setTarget(new B.Vector3(0,4,0));
 camera.minZ=.08;camera.maxZ=1200;camera.speed=.18;camera.inertia=.8;camera.angularSensibility=3600;camera.attachControl(canvas,true);
 const hemi=new B.HemisphericLight('Sky',new B.Vector3(0,1,0),scene);
 hemi.intensity=.72;hemi.diffuse=new B.Color3(.88,.91,.95);hemi.groundColor=new B.Color3(.23,.26,.22);
@@ -52,6 +52,17 @@ const pipe=new B.DefaultRenderingPipeline('RealTime',true,scene,[camera]);
 pipe.fxaaEnabled=true;pipe.imageProcessingEnabled=true;pipe.imageProcessing.exposure=1.0;pipe.imageProcessing.contrast=1.12;
 pipe.bloomEnabled=true;pipe.bloomThreshold=.92;pipe.bloomWeight=.045;pipe.bloomKernel=32;
 const shadow=new B.ShadowGenerator(1536,sun);shadow.useBlurExponentialShadowMap=true;shadow.blurKernel=18;shadow.bias=.0005;
+const loadingWorld=[];
+const loadMat=new B.StandardMaterial('LoadingWorldMaterial',scene);loadMat.diffuseColor=new B.Color3(.42,.36,.29);loadMat.specularColor=new B.Color3(.08,.08,.08);
+const loadRoadMat=new B.StandardMaterial('LoadingRoadMaterial',scene);loadRoadMat.diffuseColor=new B.Color3(.12,.13,.13);
+const loadGround=B.MeshBuilder.CreateGround('LoadingGround',{width:240,height:240},scene);loadGround.material=loadRoadMat;loadingWorld.push(loadGround);
+const loadPlaza=B.MeshBuilder.CreateBox('LoadingPlaza',{width:52,height:.16,depth:42},scene);loadPlaza.position.y=.08;loadPlaza.material=loadRoadMat;loadingWorld.push(loadPlaza);
+for(let i=-2;i<=2;i++){
+ const h=9+(Math.abs(i)%3)*4;
+ const b=B.MeshBuilder.CreateBox('LoadingBuilding',{width:12,height:h,depth:10},scene);b.position.set(i*16,h/2,18);b.material=loadMat;loadingWorld.push(b);
+ const roof=B.MeshBuilder.CreateBox('LoadingRoof',{width:12.4,height:.3,depth:10.4},scene);roof.position.set(i*16,h+.15,18);roof.material=loadMat;loadingWorld.push(roof);
+}
+info.textContent='INITIALIZING HISTORICAL WORLD…';
 // Guaranteed visible fallback scene while the measured map loads.
 
 
@@ -104,19 +115,28 @@ function treeAt(p,s=1,v=0){
  }
 }
 function facade(root,base,height,width){
- const floors=Math.max(2,Math.min(8,Math.round(height/3.2)));
- const cols=Math.max(5,Math.min(18,Math.round(width/4)));
+ const floors=Math.max(2,Math.min(8,Math.round(height/3.15)));
+ const cols=Math.max(5,Math.min(18,Math.round(width/3.8)));
  for(let floor=0;floor<floors;floor++){
-  const y=base+1.7+floor*3.0;
+  const y=base+1.72+floor*3.08;
+  const band=B.MeshBuilder.CreateBox('FacadeBand',{width:width,height:.16,depth:.24},scene);
+  band.position.set(0,y-1.0,-.16);band.material=mats.stone2;band.parent=root;
   for(let i=0;i<cols;i++){
    const x=-width/2+width*(i+.5)/cols;
-   const w=Math.min(2.2,width/cols*.72);
-   const win=B.MeshBuilder.CreateBox('HistoricWindow',{width:w,height:1.75,depth:.10},scene);
-   win.position=new B.Vector3(x,y,-.06);win.material=mats.glass;win.parent=root;
-   const sill=B.MeshBuilder.CreateBox('StoneSill',{width:w+.22,height:.10,depth:.16},scene);
-   sill.position=new B.Vector3(x,y-1.0,-.12);sill.material=mats.stone2;sill.parent=root;
+   const w=Math.min(2.35,width/cols*.70);
+   const win=B.MeshBuilder.CreateBox('HistoricWindow',{width:w,height:1.82,depth:.12},scene);
+   win.position.set(x,y,-.10);win.material=mats.glass;win.parent=root;
+   const frameL=B.MeshBuilder.CreateBox('WindowMullion',{width:.09,height:1.92,depth:.18},scene);
+   frameL.position.set(x-w/2+.08,y,-.18);frameL.material=mats.cream;frameL.parent=root;
+   const frameR=frameL.clone('WindowMullionR');frameR.position.x=x+w/2-.08;
+   const sill=B.MeshBuilder.CreateBox('StoneSill',{width:w+.30,height:.12,depth:.20},scene);
+   sill.position.set(x,y-1.02,-.20);sill.material=mats.stone2;sill.parent=root;
+   const lintel=B.MeshBuilder.CreateBox('StoneLintel',{width:w+.18,height:.14,depth:.20},scene);
+   lintel.position.set(x,y+1.00,-.19);lintel.material=mats.stone2;lintel.parent=root;
   }
  }
+ const cornice=B.MeshBuilder.CreateBox('HistoricCornice',{width:width+1.0,height:.42,depth:.42},scene);
+ cornice.position.set(0,base+height-.25,-.18);cornice.material=mats.stone2;cornice.parent=root;
 }
 function detailedBuilding(b,idx){
  const ps=points(b);if(!ps)return;
@@ -171,6 +191,15 @@ function addStreetFurniture(){
 }
 function addHistoricCars(){
  car(-14,-8,.04,'cream');car(12,9,Math.PI,'blue');car(34,-5,.02,'red');
+ car(-42,26,Math.PI*.52,'white');car(44,31,-Math.PI*.42,'cream');
+}
+function addPlazaPlanters(){
+ for(const [x,z] of [[-18,-22],[18,-22],[-30,8],[30,8]]){
+  const p=B.MeshBuilder.CreateCylinder('HistoricPlanter',{diameter:2.2,height:.75,tessellation:20},scene);
+  p.position.set(x,.38,z);p.material=mats.stone2;
+  const shrub=B.MeshBuilder.CreateSphere('PlanterShrub',{diameter:2.0,segments:12},scene);
+  shrub.position.set(x,1.35,z);shrub.scaling.y=.7;shrub.material=mats.tree2;
+ }
 }
 
 function addDepositoryUpgrade(building){
@@ -238,7 +267,7 @@ async function loadMeasured(){
  const room=addDepositoryUpgrade(target);addStreetUpgrade();
  if(room){camera.position.set(room.x,room.floorY+1.55,room.z+Math.min(8,room.roomD*.18));camera.setTarget(new B.Vector3(room.x,room.floorY+1.65,room.z-room.roomD*.35));}
  for(const m of scene.meshes)if(m.material && m.name!=='Explorer')try{m.receiveShadows=true;if(m.name.startsWith('MeasuredBuilding')||m.name.startsWith('Facade'))shadow.addShadowCaster(m,true)}catch(e){}
- info.textContent='Dealey Plaza · 1963 reconstruction · Texas School Book Depository 6th-floor interior';
+ for(const m of loadingWorld)m.dispose();info.textContent='Dealey Plaza · 1963 reconstruction · Texas School Book Depository 6th-floor interior';
 }
 loadMeasured().catch(e=>{console.error(e);info.textContent='Measured geometry could not load. Reload to retry.'});
 
