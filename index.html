@@ -231,6 +231,51 @@ function addDepositoryUpgrade(building){
  q=box('TSBD_Cornice',{width:roomW+1,height:.55,depth:.65},mats.stone2);q.position.set(x,Math.min((building.height||19.8)-1,18.8),minZ-.1);
  return {x,z,floorY,roomW,roomD};
 }
+function addDepositoryHistoricExterior(building){
+ const ps=points(building)||[]; if(ps.length<4)return;
+ let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+ for(const p of ps){minX=Math.min(minX,p[0]);maxX=Math.max(maxX,p[0]);minZ=Math.min(minZ,p[1]);maxZ=Math.max(maxZ,p[1]);}
+ const x=(minX+maxX)/2,z=(minZ+maxZ)/2;
+ const width=Math.max(28,Math.min(70,maxX-minX)),depth=Math.max(28,Math.min(70,maxZ-minZ)),h=Math.max(18,building.height||20);
+ const box=(n,o,p,m)=>{const q=B.MeshBuilder.CreateBox(n,o,scene);q.position.set(p[0],p[1],p[2]);q.material=m;return q};
+ // 1963-era ground-floor breeze-block screens, documented in period FBI photographs.
+ const bay=Math.max(7,Math.floor(width/5));
+ for(let i=0;i<bay;i++){
+  const bx=minX+width*(i+.5)/bay;
+  for(let row=0;row<2;row++){
+   const y=.75+row*.78;
+   for(let j=0;j<4;j++){
+    const q=box('DepositoryBreezeBlock',{width:1.05,height:.52,depth:.22},[bx,y,minZ-.22],mats.stone2);
+    q.rotation.y=(j%2)*Math.PI/2;
+   }
+  }
+ }
+ // Main entrance canopy and recessed doorway.
+ const canopy=box('DepositoryEntranceCanopy',{width:6.5,height:.28,depth:2.2},[x,minX===x?2.9:2.9,minZ-.95],mats.stone2);
+ const door=box('DepositoryMainDoor',{width:2.7,height:3.0,depth:.16},[x,1.65,minZ-.62],mats.glass);
+ for(const dx of [-1.45,1.45])box('DepositoryDoorFrame',{width:.12,height:3.25,depth:.20},[x+dx,1.65,minZ-.72],mats.iron);
+ // Large period sign band.
+ const signMat=new B.StandardMaterial('DepositorySignMaterial',scene);
+ const tex=new B.DynamicTexture('DepositorySignTexture',{width:1400,height:220},scene,true);
+ tex.drawText('TEXAS SCHOOL BOOK DEPOSITORY',null,145,'bold 70px Arial','#f0eadc','#6d6a5d',true);
+ signMat.diffuseTexture=tex;signMat.emissiveColor=new B.Color3(.035,.035,.03);
+ const signMesh=B.MeshBuilder.CreatePlane('DepositoryHistoricSign',{width:width*.72,height:1.35},scene);
+ signMesh.position.set(x,4.0,minZ-.48);signMesh.rotation.y=Math.PI;signMesh.material=signMat;
+ // Southeast corner emphasis: heavier masonry pier and sixth-floor opening.
+ const pier=box('DepositoryCornerPier',{width:1.15,height:h,depth:1.15},[minX+.58,h/2,minZ+.58],mats.stone2);
+ const opening=box('DepositorySixthFloorOpening',{width:4.4,height:2.8,depth:.16},[minX+4.1,h-1.75,minZ-.44],mats.glass);
+ // Roof parapet + period Hertz sign silhouette.
+ const parapet=box('DepositoryParapet',{width:width+1.1,height:.7,depth:depth+1.1},[x,h+.35,z],mats.stone2);
+ const hz=B.MeshBuilder.CreateBox('HertzSign',{width:6.8,height:2.1,depth:.18},scene);hz.position.set(minX+7,h+2.0,minZ+depth*.22);hz.material=mats.red;
+ const ht=new B.DynamicTexture('HertzLettering',{width:800,height:240},scene,true);
+ ht.drawText('HERTZ',null,160,'bold 120px Arial','#f5eee0','transparent',true);
+ const hm=new B.StandardMaterial('HertzLetterMaterial',scene);hm.diffuseTexture=ht;hm.emissiveColor=new B.Color3(.12,.03,.02);
+ const hp=B.MeshBuilder.CreatePlane('HertzLetters',{width:5.8,height:1.7},scene);hp.position.set(minX+7,h+2.02,minZ+depth*.12);hp.rotation.y=Math.PI;hp.material=hm;
+ // Rear loading dock / warehouse detail.
+ const dock=box('DepositoryLoadingDock',{width:Math.min(18,width*.35),height:1.0,depth:3.2},[maxX-8,.5,maxZ+.9],mats.stone2);
+ for(let i=0;i<4;i++)box('LoadingBayDoor',{width:2.7,height:3.2,depth:.15},[maxX-13+i*3.2,2.0,maxZ+2.55],mats.wood);
+}
+
 function addStreetUpgrade(){
  for(let i=-6;i<=6;i++){const q=B.MeshBuilder.CreateBox('RoadStripe',{width:3.4,height:.018,depth:.16},scene);q.position.set(i*6,.11,25);q.material=mats.white}
  for(const p of [[-48,18],[48,18],[-52,-12],[52,-12]]){let q=B.MeshBuilder.CreateCylinder('StreetLampPole',{diameter:.16,height:5.5,tessellation:10},scene);q.position.set(p[0],2.75,p[1]);q.material=mats.metal;q=B.MeshBuilder.CreateBox('StreetLampArm',{width:1.2,height:.12,depth:.12},scene);q.position.set(p[0]+.5,5.3,p[1]);q.material=mats.metal;q=B.MeshBuilder.CreateSphere('StreetLamp',{diameter:.3,segments:10},scene);q.position.set(p[0]+1,5.15,p[1]);q.material=mats.cream}
@@ -264,7 +309,7 @@ async function loadMeasured(){
  const named=buildings.find(b=>/depository|school book|book depository/i.test((b.name||'')));
  const six=buildings.filter(b=>Math.abs((b.height||0)-19.8)<2.5);
  const target=named||six.sort((u,v)=>Math.hypot(center(u).x,center(u).z)-Math.hypot(center(v).x,center(v).z))[0]||buildings[0];
- const room=addDepositoryUpgrade(target);addStreetUpgrade();
+ const room=addDepositoryUpgrade(target);addDepositoryHistoricExterior(target);addStreetUpgrade();
  if(room){camera.position.set(room.x,room.floorY+1.55,room.z+Math.min(8,room.roomD*.18));camera.setTarget(new B.Vector3(room.x,room.floorY+1.65,room.z-room.roomD*.35));}
  for(const m of scene.meshes)if(m.material && m.name!=='Explorer')try{m.receiveShadows=true;if(m.name.startsWith('MeasuredBuilding')||m.name.startsWith('Facade'))shadow.addShadowCaster(m,true)}catch(e){}
  for(const m of loadingWorld)m.dispose();info.textContent='Dealey Plaza · 1963 reconstruction · Texas School Book Depository 6th-floor interior';
