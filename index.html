@@ -53,9 +53,7 @@ pipe.fxaaEnabled=true;pipe.imageProcessingEnabled=true;pipe.imageProcessing.expo
 pipe.bloomEnabled=true;pipe.bloomThreshold=.92;pipe.bloomWeight=.045;pipe.bloomKernel=32;
 const shadow=new B.ShadowGenerator(1536,sun);shadow.useBlurExponentialShadowMap=true;shadow.blurKernel=18;shadow.bias=.0005;
 // Guaranteed visible fallback scene while the measured map loads.
-const fallbackGround=B.MeshBuilder.CreateGround('FallbackGround',{width:900,height:900},scene);fallbackGround.material=mats.street;
-const fallbackPlaza=B.MeshBuilder.CreateBox('FallbackPlaza',{width:90,height:.18,depth:90},scene);fallbackPlaza.position.y=.1;fallbackPlaza.material=mats.sidewalk;
-for(let i=-3;i<=3;i++){const b=B.MeshBuilder.CreateBox('FallbackBuilding',{width:12,height:8+(Math.abs(i)%3)*4,depth:12},scene);b.position.set(i*16,4+(Math.abs(i)%3)*2,-35);b.material=mats.stone;}
+
 
 const mats={};
 function M(n,c,r=.8,metal=0){const m=new B.PBRMaterial(n,scene);m.albedoColor=B.Color3.FromHexString(c);m.roughness=r;m.metallic=metal;m.environmentIntensity=.35;mats[n]=m;return m}
@@ -151,6 +149,29 @@ function sign(text,pos){
  const sm=new B.StandardMaterial('SignMaterial',scene);sm.diffuseTexture=t;sm.emissiveColor=new B.Color3(.12,.14,.13);p.material=sm;
 }
 
+
+
+// --- ADVANCED HISTORICAL BLOCK: Dealey Plaza presentation layer ---
+function addRoadMarkings(){
+ const lines=[[-90,0,90,0],[-90,0,90,0]];
+ for(let i=-3;i<=3;i++){
+  const z=i*7;
+  const m=B.MeshBuilder.CreateBox('LaneMarker',{width:3.2,height:.018,depth:.16},scene);
+  m.position.set(0,.012,z);m.material=mats.white;
+ }
+}
+function addStreetFurniture(){
+ const spots=[[-38,-18],[-28,22],[30,-12],[42,18]];
+ for(const [x,z] of spots){
+  const post=B.MeshBuilder.CreateCylinder('LampPost',{diameter:.18,height:4.2,tessellation:12},scene);
+  post.position.set(x,2.1,z);post.material=mats.metal;
+  const lamp=B.MeshBuilder.CreateSphere('Lamp',{diameter:.48,segments:12},scene);
+  lamp.position.set(x,4.25,z);lamp.material=mats.white;
+ }
+}
+function addHistoricCars(){
+ car(-14,-8,.04,'cream');car(12,9,Math.PI,'blue');car(34,-5,.02,'red');
+}
 
 function addDepositoryUpgrade(building){
  const ps=points(building)||[]; if(ps.length<4)return null;
