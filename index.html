@@ -59,9 +59,9 @@ M('street','#272a2b',.97);M('sidewalk','#8d8a81',.92);M('stone','#b8ad95',.82);M
 M('brick','#6f3e2d',.92);M('roof','#514c43',.95);M('grass','#526448',1);M('grass2','#667457',1);
 M('water','#557783',.18,.05);M('glass','#17272e',.08,.15);M('metal','#202223',.38,.7);
 M('tree','#3c5036',1);M('tree2','#526544',1);M('trunk','#493426',1);M('white','#ddd7c9',.7);
-M('red','#741c18',.36,.12);M('cream','#c4b397',.5,.05);M('blue','#354b57',.5,.08);
+M('red','#741c18',.36,.12);M('cream','#c4b397',.5,.05);M('blue','#354b57',.5,.08);\nM('interiorFloor','#6f6250',.92);M('interiorWall','#d8d0bd',.96);M('wood','#70563d',.82);M('cardboard','#9a6e3f',.96);M('iron','#3b3b37',.5,.65);
 
-function matFor(kind){kind=(kind||'').toLowerCase();if(kind.includes('road'))return mats.street;if(kind.includes('foot'))return mats.sidewalk;if(kind.includes('grass'))return mats.grass;if(kind.includes('water'))return mats.water;return mats.stone}
+function makeBrickTexture(){\n const t=new B.DynamicTexture('BrickTexture',{width:1024,height:1024},scene,true);\n const c=t.getContext();c.fillStyle='#6f3e2d';c.fillRect(0,0,1024,1024);\n const bw=96,bh=42; c.strokeStyle='rgba(35,18,13,.48)';c.lineWidth=5;\n for(let y=0;y<1024;y+=bh){c.beginPath();c.moveTo(0,y);c.lineTo(1024,y);c.stroke();const off=(Math.floor(y/bh)%2)*bw/2;for(let x=-off;x<1024;x+=bw){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+bh);c.stroke()}}\n t.update();return t;\n}\nconst brickTexture=makeBrickTexture();mats.brick.albedoTexture=brickTexture;mats.brick.bumpTexture=brickTexture;mats.brick.bumpTexture.level=.16;\n\nfunction matFor(kind){kind=(kind||'').toLowerCase();if(kind.includes('road'))return mats.street;if(kind.includes('foot'))return mats.sidewalk;if(kind.includes('grass'))return mats.grass;if(kind.includes('water'))return mats.water;return mats.stone}
 function points(o){return o.outer||o.polygon||o.points||o.path||null}
 function center(ps){let x=0,z=0;for(const p of ps){x+=p[0];z+=p[1]}return new B.Vector3(x/ps.length,0,z/ps.length)}
 function poly(name,ps,y,h,material){
@@ -137,6 +137,82 @@ function sign(text,pos){
  const sm=new B.StandardMaterial('SignMaterial',scene);sm.diffuseTexture=t;sm.emissiveColor=new B.Color3(.12,.14,.13);p.material=sm;
 }
 
+
+function addDepositoryUpgrade(){
+ const x=26,z=-123;
+ // A 1963-style sixth-floor warehouse interior, placed inside the measured building footprint.
+ const floorY=16.9, roomW=38, roomD=48, wallH=4.2;
+ const floor=B.MeshBuilder.CreateBox('TSBD_6F_Floor',{width:roomW,height:.22,depth:roomD},scene);
+ floor.position.set(x,floorY,z);floor.material=mats.interiorFloor;
+ const ceiling=B.MeshBuilder.CreateBox('TSBD_6F_Ceiling',{width:roomW,height:.18,depth:roomD},scene);
+ ceiling.position.set(x,floorY+wallH,z);ceiling.material=mats.interiorWall;
+ const back=B.MeshBuilder.CreateBox('TSBD_6F_BackWall',{width:roomW,height:wallH,depth:.22},scene);
+ back.position.set(x,floorY+wallH/2,z+roomD/2);back.material=mats.interiorWall;
+ const side1=B.MeshBuilder.CreateBox('TSBD_6F_SideWall1',{width:.22,height:wallH,depth:roomD},scene);
+ side1.position.set(x-roomW/2,floorY+wallH/2,z);side1.material=mats.interiorWall;
+ const side2=side1.clone('TSBD_6F_SideWall2');side2.position.x=x+roomW/2;
+ // Southeast-facing window wall: keep the view open toward Dealey Plaza.
+ for(let i=0;i<7;i++){
+  const wx=x-roomW/2+3+i*5.3;
+  const sill=B.MeshBuilder.CreateBox('TSBD_WindowSill',{width:4.3,height:.12,depth:.35},scene);
+  sill.position.set(wx,floorY+2.25,z-roomD/2+.25);sill.material=mats.stone2;
+  const frame=B.MeshBuilder.CreateBox('TSBD_WindowFrame',{width:.13,height:2.3,depth:.18},scene);
+  frame.position.set(wx-2.1,floorY+3.25,z-roomD/2+.12);frame.material=mats.wood;
+  const frame2=frame.clone('TSBD_WindowFrame2');frame2.position.x=wx+2.1;
+  const glass=B.MeshBuilder.CreatePlane('TSBD_1963_Window',{width:4.1,height:2.05},scene);
+  glass.position.set(wx,floorY+3.25,z-roomD/2+.02);glass.rotation.y=Math.PI;glass.material=mats.glass;
+ }
+ // Whitewashed structural beams and columns characteristic of the warehouse floors.
+ for(let i=0;i<5;i++){
+  const bx=x-roomW/2+4+i*7.5;
+  const col=B.MeshBuilder.CreateBox('TSBD_Column',{width:.42,height:wallH,depth:.42},scene);
+  col.position.set(bx,floorY+wallH/2,z);col.material=mats.white;
+  const beam=B.MeshBuilder.CreateBox('TSBD_CeilingBeam',{width:.48,height:.34,depth:roomD},scene);
+  beam.position.set(bx,floorY+wallH-.28,z);beam.material=mats.white;
+ }
+ // Period warehouse cartons and a few low shelving runs.
+ for(let row=0;row<3;row++) for(let col=0;col<6;col++){
+  const box=B.MeshBuilder.CreateBox('SchoolbookCarton',{width:1.25,height:1.05,depth:1.05},scene);
+  box.position.set(x-12+col*1.45,floorY+.62,z+7+row*1.25);box.material=mats.cardboard;
+ }
+ for(let row=0;row<2;row++){
+  const shelf=B.MeshBuilder.CreateBox('WarehouseShelf',{width:11,height:2.2,depth:.35},scene);
+  shelf.position.set(x+10,floorY+1.2,z+5+row*5);shelf.material=mats.wood;
+ }
+ // Hanging industrial lamps.
+ for(let i=0;i<6;i++){
+  const lx=x-12+i*5;
+  const cord=B.MeshBuilder.CreateCylinder('LampCord',{diameter:.035,height:1.0,tessellation:8},scene);
+  cord.position.set(lx,floorY+wallH-.55,z-7);cord.material=mats.iron;
+  const lamp=B.MeshBuilder.CreateSphere('WarehouseLamp',{diameter:.55,segments:12},scene);
+  lamp.position.set(lx,floorY+wallH-1.05,z-7);lamp.scaling.y=.55;lamp.material=mats.metal;
+  const light=new B.PointLight('LampLight',new B.Vector3(lx,floorY+wallH-1.1,z-7),scene);
+  light.diffuse=new B.Color3(1,.78,.55);light.intensity=.18;light.range=8;
+ }
+ // Exterior facade detail: brick pier rhythm, stone lintels, cornice and loading-dock-era trim.
+ const extH=19.8;
+ const facadeZ=z-roomD/2-.25;
+ for(let floor=0;floor<6;floor++){
+  const y=2.0+floor*3.05;
+  for(let i=0;i<9;i++){
+   const wx=x-17+i*4.25;
+   const win=B.MeshBuilder.CreateBox('TSBD_ExteriorWindow',{width:2.65,height:1.65,depth:.12},scene);
+   win.position.set(wx,y,facadeZ);win.material=mats.glass;
+   const lintel=B.MeshBuilder.CreateBox('TSBD_StoneLintel',{width:3.0,height:.18,depth:.2},scene);
+   lintel.position.set(wx,y+.93,facadeZ-.03);lintel.material=mats.stone2;
+  }
+ }
+ const cornice=B.MeshBuilder.CreateBox('TSBD_Cornice',{width:roomW+1.2,height:.55,depth:.65},scene);
+ cornice.position.set(x,18.8,facadeZ-.1);cornice.material=mats.stone2;
+ // Period rooftop billboard support (sign face left blank to avoid implying a modern logo).
+ for(let i=-1;i<=1;i++){
+  const post=B.MeshBuilder.CreateBox('RoofBillboardPost',{width:.22,height:4.2,depth:.22},scene);
+  post.position.set(x+i*5,21.0,z+2);post.material=mats.iron;
+ }
+ const board=B.MeshBuilder.CreateBox('RoofBillboard',{width:14,height:3.2,depth:.18},scene);
+ board.position.set(x,22.9,z+2);board.material=mats.cream;
+}
+
 async function loadMeasured(){
  info.textContent='Loading 22 MB measured geometry…';
  const res=await fetch('https://www.wheretheylead.com/data/plaza-geometry.json',{cache:'force-cache'});
@@ -163,9 +239,9 @@ async function loadMeasured(){
  // Period details layered onto the measured layout.
  car(-14,14,.02,'red');car(12,18,Math.PI,'cream');car(4,5,-.1,'white');
  sign('DEALEY PLAZA',new B.Vector3(-11,2.8,-5));
- camera.position=new B.Vector3(0,2.05,58);camera.setTarget(new B.Vector3(0,3,-15));
+ addDepositoryUpgrade();\ncamera.position=new B.Vector3(26,18.05,-108);camera.setTarget(new B.Vector3(26,19.1,-135));
  for(const m of scene.meshes)if(m.material && m.name!=='Explorer')try{m.receiveShadows=true;if(m.name.startsWith('MeasuredBuilding')||m.name.startsWith('Facade'))shadow.addShadowCaster(m,true)}catch(e){}
- info.textContent='Dealey Plaza · measured 1964 survey geometry · '+buildings.length+' nearby buildings';
+ info.textContent='Dealey Plaza · 1963 reconstruction · Texas School Book Depository 6th-floor interior';
 }
 loadMeasured().catch(e=>{console.error(e);info.textContent='Measured geometry could not load. Reload to retry.'});
 
@@ -176,7 +252,7 @@ canvas.addEventListener('pointerdown',e=>{if(e.clientX<innerWidth*.48){movePoint
 canvas.addEventListener('pointermove',e=>{if(e.pointerId===look.id){const dx=e.clientX-look.x,dy=e.clientY-look.y;camera.rotation.y+=dx*.0031;camera.rotation.x+=dy*.0022;camera.rotation.x=B.Scalar.Clamp(camera.rotation.x,-1.25,1.25);look.x=e.clientX;look.y=e.clientY}else if(e.clientX<innerWidth*.48)movePoint(e)});
 ['pointerup','pointercancel'].forEach(ev=>canvas.addEventListener(ev,e=>{if(e.pointerId===look.id)look.id=null;move.x=move.y=0}));
 
-function applyQuality(v){const s={Cinematic:[1.0,true,.0015],High:[1.0,true,.0018],Balanced:[1.12,false,.0022],Performance:[1.28,false,.0028]}[v];engine.setHardwareScalingLevel(s[0]);pipe.bloomEnabled=s[1];scene.fogDensity=s[2]}
+function applyQuality(v){const s={Cinematic:[.85,true,.0012],High:[1.0,true,.0018],Balanced:[1.12,false,.0022],Performance:[1.28,false,.0028]}[v];engine.setHardwareScalingLevel(s[0]);pipe.bloomEnabled=s[1];scene.fogDensity=s[2];shadow.mapSize=v==='Cinematic'?2048:1536}
 quality.onchange=()=>applyQuality(quality.value);applyQuality('High');
 
 let frames=0;scene.onBeforeRenderObservable.add(()=>{const f=keys.w||keys.arrowup?-1:keys.s||keys.arrowdown?1:move.y;const str=keys.d||keys.arrowright?1:keys.a||keys.arrowleft?-1:move.x;const sp=keys.shift?camera.speed*1.7:camera.speed;let fw=camera.getDirection(B.Axis.Z);fw.y=0;fw.normalize();let rt=camera.getDirection(B.Axis.X);rt.y=0;rt.normalize();camera.position.addInPlace(fw.scale(-f*sp));camera.position.addInPlace(rt.scale(str*sp));camera.position.y=2.05;if(++frames%30===0)info.textContent='Dealey Plaza · 1963  |  '+Math.round(engine.getFps())+' FPS'});
