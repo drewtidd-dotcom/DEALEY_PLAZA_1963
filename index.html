@@ -5,258 +5,182 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Dealey Plaza: 1963</title>
 <style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101315;font-family:system-ui,-apple-system,sans-serif;color:#fff}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#20262a;font-family:system-ui,-apple-system,sans-serif;color:#fff}
 #game{width:100%;height:100%;display:block;touch-action:none}
 #hud{position:fixed;inset:0;pointer-events:none}
 .top{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.card{background:rgba(8,10,11,.70);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:9px 12px;font-size:12px;text-shadow:0 1px 2px #000}
+.card{background:rgba(7,9,10,.68);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:9px 12px;font-size:12px;text-shadow:0 1px 2px #000}
 .title{font-weight:800;font-size:14px;letter-spacing:.3px}.muted{opacity:.68}
 #quality{pointer-events:auto;background:#111;color:#fff;border:1px solid #555;border-radius:8px;padding:5px}
-#info{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);max-width:80%;text-align:center;white-space:nowrap}
-#cross{position:absolute;left:50%;top:50%;width:14px;height:14px;transform:translate(-50%,-50%);opacity:.55}
+#info{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);max-width:82%;text-align:center;white-space:nowrap}
+#hint{position:absolute;bottom:18px;left:14px;font-size:11px;opacity:.5}
+#cross{position:absolute;left:50%;top:50%;width:14px;height:14px;transform:translate(-50%,-50%);opacity:.5}
 #cross:before,#cross:after{content:'';position:absolute;background:#fff}
 #cross:before{width:14px;height:1px;top:7px}.cross:after{height:14px;width:1px;left:7px}
-#hint{position:absolute;bottom:18px;left:14px;font-size:11px;opacity:.5}
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 <div id="hud">
-  <div class="top">
-    <div class="card"><div class="title">DEALEY PLAZA · 1963</div><div class="muted">Historical reconstruction / exploration</div></div>
-    <div class="card">Quality <select id="quality"><option>Cinematic</option><option selected>High</option><option>Balanced</option><option>Performance</option></select></div>
-  </div>
-  <div id="cross" class="cross"></div>
-  <div id="info" class="card">Building Dealey Plaza…</div>
-  <div id="hint">Touch: left side move · right side look</div>
+<div class="top">
+<div class="card"><div class="title">DEALEY PLAZA · 1963</div><div class="muted">Measured historical reconstruction / exploration</div></div>
+<div class="card">Quality <select id="quality"><option>Cinematic</option><option selected>High</option><option>Balanced</option><option>Performance</option></select></div>
+</div>
+<div id="cross" class="cross"></div>
+<div id="info" class="card">Loading measured Dealey Plaza geometry…</div>
+<div id="hint">Touch: left side move · right side look</div>
 </div>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script>
 (()=> {
-const canvas=document.getElementById('game'),info=document.getElementById('info'),quality=document.getElementById('quality');
-const B=window.BABYLON;
-if(!B){info.textContent='Renderer failed to load — reload the page.';return}
+const B=window.BABYLON,canvas=document.getElementById('game'),info=document.getElementById('info'),quality=document.getElementById('quality');
+if(!B){info.textContent='Renderer failed to load.';return}
 const engine=new B.Engine(canvas,true,{antialias:true,preserveDrawingBuffer:false,stencil:true});
 engine.enableOfflineSupport=false;
-engine.setHardwareScalingLevel(Math.min(1.25,Math.max(1,devicePixelRatio/1.7)));
 const scene=new B.Scene(engine);
-scene.clearColor=new B.Color4(.55,.64,.69,1);
-scene.fogMode=B.Scene.FOGMODE_EXP2; scene.fogDensity=.0022; scene.fogColor=new B.Color3(.55,.64,.69);
-scene.collisionsEnabled=false;
-
-const camera=new B.UniversalCamera('Explorer',new B.Vector3(0,2.05,28),scene);
-camera.minZ=.05;camera.maxZ=650;camera.speed=.18;camera.inertia=.78;camera.angularSensibility=3600;
-camera.attachControl(canvas,true);
-
-const hemi=new B.HemisphericLight('SkyLight',new B.Vector3(0,1,0),scene);
-hemi.intensity=.68;hemi.diffuse=new B.Color3(.84,.88,.92);hemi.groundColor=new B.Color3(.22,.25,.20);
-const sun=new B.DirectionalLight('Sun',new B.Vector3(-.42,-1,.35),scene);
-sun.position=new B.Vector3(90,130,70);sun.intensity=2.15;
-const fill=new B.PointLight('WarmFill',new B.Vector3(-45,18,35),scene);
-fill.intensity=32;fill.range=120;fill.diffuse=new B.Color3(1,.72,.52);
-
+scene.clearColor=new B.Color4(.53,.61,.67,1);
+scene.fogMode=B.Scene.FOGMODE_EXP2;scene.fogColor=new B.Color3(.53,.61,.67);scene.fogDensity=.0018;
+const camera=new B.UniversalCamera('Explorer',new B.Vector3(0,2.0,48),scene);
+camera.minZ=.08;camera.maxZ=1200;camera.speed=.18;camera.inertia=.8;camera.angularSensibility=3600;camera.attachControl(canvas,true);
+const hemi=new B.HemisphericLight('Sky',new B.Vector3(0,1,0),scene);
+hemi.intensity=.72;hemi.diffuse=new B.Color3(.88,.91,.95);hemi.groundColor=new B.Color3(.23,.26,.22);
+const sun=new B.DirectionalLight('Sun',new B.Vector3(-.42,-1,.32),scene);
+sun.position=new B.Vector3(180,240,130);sun.intensity=2.05;
 const env=B.CubeTexture.CreateFromPrefilteredData('https://assets.babylonjs.com/environments/environmentSpecular.env',scene);
-scene.environmentTexture=env;scene.environmentIntensity=.48;
-const pipe=new B.DefaultRenderingPipeline('MobileCinematic',true,scene,[camera]);
-pipe.fxaaEnabled=true;pipe.imageProcessingEnabled=true;
-pipe.imageProcessing.exposure=1.02;pipe.imageProcessing.contrast=1.10;
-pipe.bloomEnabled=true;pipe.bloomThreshold=.9;pipe.bloomWeight=.055;pipe.bloomKernel=48;
-let shadowSize=1536;
-let shadows=new B.ShadowGenerator(shadowSize,sun);
-shadows.useBlurExponentialShadowMap=true;shadows.blurKernel=24;shadows.bias=.0005;
+scene.environmentTexture=env;scene.environmentIntensity=.42;
+const pipe=new B.DefaultRenderingPipeline('RealTime',true,scene,[camera]);
+pipe.fxaaEnabled=true;pipe.imageProcessingEnabled=true;pipe.imageProcessing.exposure=1.0;pipe.imageProcessing.contrast=1.12;
+pipe.bloomEnabled=true;pipe.bloomThreshold=.92;pipe.bloomWeight=.045;pipe.bloomKernel=32;
+const shadow=new B.ShadowGenerator(1536,sun);shadow.useBlurExponentialShadowMap=true;shadow.blurKernel=18;shadow.bias=.0005;
 
 const mats={};
-function mat(name,hex,rough=.8,metal=0){
- const m=new B.PBRMaterial(name,scene);
- m.albedoColor=B.Color3.FromHexString(hex);m.roughness=rough;m.metallic=metal;m.environmentIntensity=.4;
- return mats[name]=m;
-}
-mat('asphalt','#282a2b',.98);mat('roadedge','#3b3b38',.95);mat('concrete','#918d82',.93);
-mat('limestone','#b9af98',.82);mat('limestoneDark','#8f8776',.9);mat('brick','#713e2c',.9);
-mat('mortar','#a89c88',1);mat('grass','#4e6046',1);mat('grass2','#667254',1);
-mat('leaf','#35452f',1);mat('leaf2','#465638',1);mat('bark','#4b3526',1);
-mat('black','#17191a',.48,.5);mat('chrome','#c2c5bf',.18,.92);mat('glass','#18272e',.08,.2);
-mat('red','#751b17',.34,.12);mat('cream','#c6b69a',.48,.05);mat('blue','#334b58',.5,.12);
-mat('white','#d9d4c7',.72);mat('yellow','#d4aa4b',.62,.05);
+function M(n,c,r=.8,metal=0){const m=new B.PBRMaterial(n,scene);m.albedoColor=B.Color3.FromHexString(c);m.roughness=r;m.metallic=metal;m.environmentIntensity=.35;mats[n]=m;return m}
+M('street','#272a2b',.97);M('sidewalk','#8d8a81',.92);M('stone','#b8ad95',.82);M('stone2','#8f8777',.9);
+M('brick','#6f3e2d',.92);M('roof','#514c43',.95);M('grass','#526448',1);M('grass2','#667457',1);
+M('water','#557783',.18,.05);M('glass','#17272e',.08,.15);M('metal','#202223',.38,.7);
+M('tree','#3c5036',1);M('tree2','#526544',1);M('trunk','#493426',1);M('white','#ddd7c9',.7);
+M('red','#741c18',.36,.12);M('cream','#c4b397',.5,.05);M('blue','#354b57',.5,.08);
 
-function box(name,p,s,m){
- const x=B.MeshBuilder.CreateBox(name,{width:s[0],height:s[1],depth:s[2]},scene);
- x.position.copyFrom(p);x.material=m;return x;
+function matFor(kind){kind=(kind||'').toLowerCase();if(kind.includes('road'))return mats.street;if(kind.includes('foot'))return mats.sidewalk;if(kind.includes('grass'))return mats.grass;if(kind.includes('water'))return mats.water;return mats.stone}
+function points(o){return o.outer||o.polygon||o.points||o.path||null}
+function center(ps){let x=0,z=0;for(const p of ps){x+=p[0];z+=p[1]}return new B.Vector3(x/ps.length,0,z/ps.length)}
+function poly(name,ps,y,h,material){
+ if(!ps||ps.length<3)return null;
+ const shape=ps.map(p=>new B.Vector3(p[0],y,p[1]));
+ try{
+  const builder=new B.PolygonMeshBuilder(name,shape,scene);
+  const mesh=builder.build(false,h||.02);mesh.material=material;return mesh;
+ }catch(e){
+  return null;
+ }
 }
-function cyl(name,p,r,h,m,seg=18){
- const x=B.MeshBuilder.CreateCylinder(name,{diameter:r*2,height:h,tessellation:seg},scene);
- x.position.copyFrom(p);x.material=m;return x;
+function lineMesh(name,ps,y,width,material){
+ if(!ps||ps.length<2)return;
+ const paths=[ps.map(p=>new B.Vector3(p[0],y,p[1]))];
+ try{
+  const ribbon=B.MeshBuilder.CreateRibbon(name,{pathArray:paths,closeArray:false,closePath:false,sideOrientation:B.Mesh.DOUBLESIDE},scene);
+  ribbon.material=material;return ribbon;
+ }catch(e){return null}
 }
-function ground(name,p,w,d,m){
- const x=B.MeshBuilder.CreateGround(name,{width:w,height:d,subdivisions:2},scene);
- x.position.copyFrom(p);x.material=m;return x;
+function treeAt(p,s=1,v=0){
+ const x=p[0],z=p[1],tr=B.MeshBuilder.CreateCylinder('TreeTrunk',{diameter:.8*s,height:5*s,tessellation:10},scene);
+ tr.position=new B.Vector3(x,2.5*s,z);tr.material=mats.trunk;
+ for(let i=0;i<6;i++){
+  const a=i*Math.PI/3;
+  const f=B.MeshBuilder.CreateSphere('TreeCrown',{diameter:3.4*s,segments:10},scene);
+  f.position=new B.Vector3(x+Math.cos(a)*1.25*s,5.2*s,z+Math.sin(a)*1.25*s);f.material=v?mats.tree2:mats.tree;
+ }
 }
-function sphere(name,p,d,m,seg=12){
- const x=B.MeshBuilder.CreateSphere(name,{diameter:d,segments:seg},scene);
- x.position.copyFrom(p);x.material=m;return x;
-}
-function parent(o,p){o.parent=p;return o}
-
-const lawn=ground('Lawn',new B.Vector3(0,-.04,-12),115,105,mats.grass);
-const road=box('ElmStreetRoad',new B.Vector3(0,.02,11),[105,.10,38],mats.asphalt);
-const plaza=box('PlazaConcrete',new B.Vector3(0,.08,-22),[62,.16,25],mats.concrete);
-box('CurbSouth',new B.Vector3(0,.18,-3),[105,.28,.8],mats.roadedge);
-box('CurbNorth',new B.Vector3(0,.18,-41),[105,.28,.8],mats.roadedge);
-
-for(let z of [1,9,17]){
- for(let x=-48;x<=48;x+=7) box('LaneStripe',new B.Vector3(x,.095,z),[3.4,.025,.15],mats.white);
-}
-for(let x=-29;x<=29;x+=4){
- box('WalkJoint',new B.Vector3(x,.171,-22),[.035,.01,24],mats.limestoneDark);
-}
-for(let z=-33;z<=-11;z+=4){
- box('WalkJoint2',new B.Vector3(0,.171,z),[62,.01,.035],mats.limestoneDark);
-}
-
-function depository(){
- const root=new B.TransformNode('TexasSchoolBookDepository',scene);
- root.position=new B.Vector3(0,0,-49);
- box('BuildingMass',new B.Vector3(0,10,0),[56,20,16],mats.limestone).parent=root;
- // front brick/stone rhythm
- for(let floor=0;floor<5;floor++){
-  const y=2.6+floor*3.45;
-  for(let x=-25.2;x<=25.2;x+=4.2){
-   box('WindowFrame',new B.Vector3(x,y,-8.08),[3.25,2.45,.22],mats.limestoneDark).parent=root;
-   box('WindowGlass',new B.Vector3(x,y,-8.22),[2.55,1.78,.12],mats.glass).parent=root;
-   box('WindowSill',new B.Vector3(x,y-1.28,-8.32),[3.45,.18,.30],mats.limestone).parent=root;
+function facade(root,base,height,width){
+ const floors=Math.max(2,Math.min(8,Math.round(height/3.2)));
+ const cols=Math.max(5,Math.min(18,Math.round(width/4)));
+ for(let floor=0;floor<floors;floor++){
+  const y=base+1.7+floor*3.0;
+  for(let i=0;i<cols;i++){
+   const x=-width/2+width*(i+.5)/cols;
+   const w=Math.min(2.2,width/cols*.72);
+   const win=B.MeshBuilder.CreateBox('HistoricWindow',{width:w,height:1.75,depth:.10},scene);
+   win.position=new B.Vector3(x,y,-.06);win.material=mats.glass;win.parent=root;
+   const sill=B.MeshBuilder.CreateBox('StoneSill',{width:w+.22,height:.10,depth:.16},scene);
+   sill.position=new B.Vector3(x,y-1.0,-.12);sill.material=mats.stone2;sill.parent=root;
   }
-  box('FloorBand',new B.Vector3(0,y-1.78,-8.3),[55,.16,.22],mats.brick).parent=root;
- }
- // brick end walls and roofline
- box('Roofline',new B.Vector3(0,20.65,0),[57,1.25,17],mats.limestoneDark).parent=root;
- box('RoofCap',new B.Vector3(0,21.35,0),[58,.35,18],mats.limestone).parent=root;
- // roof parapet blocks
- for(let x=-26;x<=26;x+=4) box('Parapet',new B.Vector3(x,21.9,-6.5),[3,.8,1],mats.limestone).parent=root;
-}
-depository();
-
-function peristyle(){
- const r=new B.TransformNode('PeristyleShelter',scene);r.position=new B.Vector3(0,0,-20);
- box('PeristyleBase',new B.Vector3(0,.48,0),[34,.96,10],mats.limestone).parent=r;
- box('PeristyleTop',new B.Vector3(0,7.55,0),[35,1.15,10.5],mats.limestone).parent=r;
- box('PeristyleRear',new B.Vector3(0,4.0,4.55),[34,7.9,.55],mats.brick).parent=r;
- for(let i=-6;i<=6;i++){
-  const x=i*2.55;
-  cyl('Column',new B.Vector3(x,4.05,0),.66,6.85,mats.limestone,24).parent=r;
-  cyl('Capital',new B.Vector3(x,7.48,0),.98,.48,mats.limestone,24).parent=r;
-  box('ColumnBase',new B.Vector3(x,.92,0),[1.45,.28,1.45],mats.limestoneDark).parent=r;
  }
 }
-peristyle();
-
-function planter(x,z,w,d){
- box('Planter',new B.Vector3(x,.55,z),[w,1.1,d],mats.limestoneDark);
-}
-planter(-25,-22,5,3);planter(25,-22,5,3);
-
-function tree(x,z,s=1,variant=0){
- const trunk=cyl('TreeTrunk',new B.Vector3(x,2.7*s,z),.42*s,5.4*s,mats.bark,12);
- const crownMat=variant?mats.leaf2:mats.leaf;
- for(let i=0;i<8;i++){
-  const a=i*Math.PI/4, bx=x+Math.cos(a)*1.35*s,bz=z+Math.sin(a)*1.35*s;
-  const br=cyl('Branch',new B.Vector3((x+bx)/2,4.5*s,(z+bz)/2),.14*s,3.1*s,mats.bark,8);
-  br.rotation.z=Math.cos(a)*.62;br.rotation.x=Math.sin(a)*.62;
-  sphere('Foliage',new B.Vector3(bx,5.6*s,bz),3.25*s,crownMat,14);
+function detailedBuilding(b,idx){
+ const ps=points(b);if(!ps)return;
+ const c=center(ps);const h=Math.max(2,Math.min(80,b.height||8));
+ const m=matFor(b.kind);
+ const mesh=poly('MeasuredBuilding_'+idx,ps,0,h,m);if(!mesh)return;
+ mesh.receiveShadows=true;
+ // Add architectural depth only to the nearest buildings so the phone stays fast.
+ const d=Math.hypot(c.x,c.z);
+ if(d<115 && h>5){
+  const root=new B.TransformNode('FacadeDetail_'+idx,scene);root.position=new B.Vector3(c.x,0,c.z);
+  const w=Math.min(55,Math.max(12,Math.sqrt(ps.reduce((a,p)=>a+Math.hypot(p[0]-c.x,p[1]-c.z),0))));
+  facade(root,0,h,w);
  }
- sphere('CanopyCore',new B.Vector3(x,5.8*s,z),4.1*s,crownMat,16);
-}
-[[-30,-15,1.15,0],[-20,-8,1.0,1],[23,-12,1.2,0],[31,-25,1.15,1],[-34,4,1.25,0],[34,7,1.1,1],[-29,28,1.2,1],[29,27,1.3,0],[-7,30,1.05,0],[9,28,1.0,1]].forEach(a=>tree(a[0],a[1],a[2],a[3]));
-
-function sedan(x,z,rot,color){
- const r=new B.TransformNode('1963_Sedan',scene);r.position=new B.Vector3(x,.82,z);r.rotation.y=rot;
- parent(box('LowerBody',new B.Vector3(0,.65,0),[5.15,1.15,2.02],mats[color]),r);
- parent(box('Hood',new B.Vector3(1.55,1.12,0),[1.65,.48,1.92],mats[color]),r);
- parent(box('Cabin',new B.Vector3(-.45,1.5,0),[2.75,1.15,1.78],mats[color]),r);
- parent(box('FrontGlass',new B.Vector3(.18,1.53,0),[.65,.72,1.62],mats.glass),r);
- parent(box('RearGlass',new B.Vector3(-1.08,1.53,0),[.55,.72,1.62],mats.glass),r);
- for(const sx of [-1.82,1.82])for(const sz of [-.82,.82]){
-  const w=cyl('Tire',new B.Vector3(sx,.02,sz),.48,.28,mats.black,20);w.rotation.z=Math.PI/2;parent(w,r);
-  const hub=cyl('Hubcap',new B.Vector3(sx,.02,sz),.20,.30,mats.chrome,16);hub.rotation.z=Math.PI/2;parent(hub,r);
+ if(d<75){
+  const roof=poly('Roof_'+idx,ps,h+.06,.10,mats.roof);
+  if(roof)roof.receiveShadows=true;
  }
- parent(box('BumperFront',new B.Vector3(2.57,.62,0),[.18,.18,2.1],mats.chrome),r);
- parent(box('BumperRear',new B.Vector3(-2.57,.62,0),[.18,.18,2.1],mats.chrome),r);
- return r;
 }
-sedan(-17,10,.02,'red');sedan(13,15,Math.PI,'cream');sedan(4,3,-.10,'white');sedan(-31,-4,.06,'blue');
-
-function streetLamp(x,z){
- cyl('LampPost',new B.Vector3(x,4.1,z),.10,8.2,mats.black,14);
- box('LampArm',new B.Vector3(x+.45,8.05,z),[.9,.10,.10],mats.black);
- sphere('LampGlow',new B.Vector3(x+.86,7.9,z),.42,mats.white,12);
+function car(x,z,r,c){
+ const root=new B.TransformNode('PeriodSedan',scene);root.position=new B.Vector3(x,.8,z);root.rotation.y=r;
+ const body=B.MeshBuilder.CreateBox('Body',{width:5.1,height:1.1,depth:2.0},scene);body.position.y=.55;body.material=mats[c];body.parent=root;
+ const cabin=B.MeshBuilder.CreateBox('Cabin',{width:2.8,height:1.05,depth:1.75},scene);cabin.position.set(-.45,1.45,0);cabin.material=mats[c];cabin.parent=root;
+ const glass=B.MeshBuilder.CreateBox('Glass',{width:2.45,height:.65,depth:1.8},scene);glass.position.set(-.2,1.48,0);glass.material=mats.glass;glass.parent=root;
+ for(const sx of [-1.8,1.8])for(const sz of [-.82,.82]){const w=B.MeshBuilder.CreateCylinder('Wheel',{diameter:.92,height:.28,tessellation:18},scene);w.rotation.z=Math.PI/2;w.position.set(sx,.02,sz);w.material=mats.metal;w.parent=root}
 }
-for(let x=-42;x<=42;x+=14) streetLamp(x,-2);
-
-function sign(text,pos,scale=1){
- const p=B.MeshBuilder.CreatePlane('HistoricSign',{width:3.8*scale,height:.95*scale},scene);
- p.position.copyFrom(pos);p.rotation.y=Math.PI;
- const t=new B.DynamicTexture('SignTexture',{width:760,height:190},scene,true);
- t.hasAlpha=true;t.drawText(text,null,122,'bold 58px Arial','#eee7d4','transparent',true);
- const m=new B.StandardMaterial('SignMaterial',scene);m.diffuseTexture=t;m.emissiveColor=new B.Color3(.16,.18,.16);p.material=m;
+function sign(text,pos){
+ const p=B.MeshBuilder.CreatePlane('HistoricalSign',{width:4,height:1},scene);p.position.copyFrom(pos);p.rotation.y=Math.PI;
+ const t=new B.DynamicTexture('SignText',{width:800,height:200},scene,true);t.hasAlpha=true;t.drawText(text,null,130,'bold 58px Arial','#eee8d8','transparent',true);
+ const sm=new B.StandardMaterial('SignMaterial',scene);sm.diffuseTexture=t;sm.emissiveColor=new B.Color3(.12,.14,.13);p.material=sm;
 }
-sign('DEALEY PLAZA',new B.Vector3(-12,2.6,-5),1);
 
-function bollard(x,z){cyl('Bollard',new B.Vector3(x,.72,z),.12,1.44,mats.black,12)}
-for(let x=-28;x<=28;x+=4) bollard(x,-8);
+async function loadMeasured(){
+ info.textContent='Loading 22 MB measured geometry…';
+ const res=await fetch('https://www.wheretheylead.com/data/plaza-geometry.json',{cache:'force-cache'});
+ if(!res.ok)throw new Error('Geometry download failed: '+res.status);
+ const data=await res.json();
+ const all=[];
+ const cats=['buildings','roads','footways','grass','water','fences','walls'];
+ for(const cat of cats){
+  if(!Array.isArray(data[cat]))continue;
+  for(const o of data[cat]){const ps=points(o);if(!ps)continue;const c=center(ps);if(Math.hypot(c.x,c.z)<310)all.push({cat,o,c})}
+ }
+ info.textContent='Building measured scene…';
+ // Ground layers first.
+ for(const e of all){
+  const ps=points(e.o);if(e.cat==='grass')poly('MeasuredGrass',ps,.01,.025,mats.grass);
+  else if(e.cat==='water')poly('MeasuredWater',ps,.035,.04,mats.water);
+  else if(e.cat==='roads')poly('MeasuredRoad',ps,.02,.06,mats.street);
+  else if(e.cat==='footways')poly('MeasuredFootway',ps,.075,.07,mats.sidewalk);
+ }
+ const buildings=(data.buildings||[]).filter(o=>{const ps=points(o),c=ps?center(ps):null;return c&&Math.hypot(c.x,c.z)<310});
+ buildings.sort((a,b)=>Math.hypot(center(a).x,center(a).z)-Math.hypot(center(b).x,center(b).z));
+ buildings.forEach((b,i)=>detailedBuilding(b,i));
+ (data.trees||[]).forEach((t,i)=>{const ps=points(t),c=ps?center(ps):null;if(c&&Math.hypot(c.x,c.z)<310)treeAt([c.x,c.z],1+(i%3)*.12,i%2)});
+ // Period details layered onto the measured layout.
+ car(-14,14,.02,'red');car(12,18,Math.PI,'cream');car(4,5,-.1,'white');
+ sign('DEALEY PLAZA',new B.Vector3(-11,2.8,-5));
+ camera.position=new B.Vector3(0,2.05,58);camera.setTarget(new B.Vector3(0,3,-15));
+ for(const m of scene.meshes)if(m.material && m.name!=='Explorer')try{m.receiveShadows=true;if(m.name.startsWith('MeasuredBuilding')||m.name.startsWith('Facade'))shadow.addShadowCaster(m,true)}catch(e){}
+ info.textContent='Dealey Plaza · measured 1964 survey geometry · '+buildings.length+' nearby buildings';
+}
+loadMeasured().catch(e=>{console.error(e);info.textContent='Measured geometry could not load. Reload to retry.'});
 
-camera.position=new B.Vector3(0,2.05,30);
-camera.setTarget(new B.Vector3(0,2,-17));
-
-const keys={};
-addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
-addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 let move={x:0,y:0},look={id:null,x:0,y:0};
 function movePoint(e){move.x=B.Scalar.Clamp(e.clientX/innerWidth*2-1,-1,1);move.y=B.Scalar.Clamp(e.clientY/innerHeight*2-1,-1,1)}
-canvas.addEventListener('pointerdown',e=>{
- if(e.clientX<innerWidth*.48){movePoint(e);canvas.setPointerCapture?.(e.pointerId)}
- else{look.id=e.pointerId;look.x=e.clientX;look.y=e.clientY;canvas.setPointerCapture?.(e.pointerId)}
-});
-canvas.addEventListener('pointermove',e=>{
- if(e.pointerId===look.id){const dx=e.clientX-look.x,dy=e.clientY-look.y;camera.rotation.y+=dx*.0031;camera.rotation.x+=dy*.0022;camera.rotation.x=B.Scalar.Clamp(camera.rotation.x,-1.25,1.25);look.x=e.clientX;look.y=e.clientY}
- else if(e.clientX<innerWidth*.48)movePoint(e);
-});
-['pointerup','pointercancel','pointerleave'].forEach(ev=>canvas.addEventListener(ev,e=>{if(e.pointerId===look.id)look.id=null;if(ev!=='pointerleave'){move.x=0;move.y=0}}));
+canvas.addEventListener('pointerdown',e=>{if(e.clientX<innerWidth*.48){movePoint(e);canvas.setPointerCapture?.(e.pointerId)}else{look.id=e.pointerId;look.x=e.clientX;look.y=e.clientY;canvas.setPointerCapture?.(e.pointerId)}});
+canvas.addEventListener('pointermove',e=>{if(e.pointerId===look.id){const dx=e.clientX-look.x,dy=e.clientY-look.y;camera.rotation.y+=dx*.0031;camera.rotation.x+=dy*.0022;camera.rotation.x=B.Scalar.Clamp(camera.rotation.x,-1.25,1.25);look.x=e.clientX;look.y=e.clientY}else if(e.clientX<innerWidth*.48)movePoint(e)});
+['pointerup','pointercancel'].forEach(ev=>canvas.addEventListener(ev,e=>{if(e.pointerId===look.id)look.id=null;move.x=move.y=0}));
 
-function applyQuality(v){
- const settings={
-  Cinematic:{scale:1.0,bloom:true,shadow:1536,fog:.0018},
-  High:{scale:1.0,bloom:true,shadow:1024,fog:.0021},
-  Balanced:{scale:1.12,bloom:false,shadow:768,fog:.0024},
-  Performance:{scale:1.28,bloom:false,shadow:512,fog:.0028}
- }[v];
- engine.setHardwareScalingLevel(settings.scale);
- pipe.bloomEnabled=settings.bloom;
- scene.fogDensity=settings.fog;
- info.textContent='Quality: '+v+' · historical exploration';
-}
-quality.onchange=()=>applyQuality(quality.value);
-applyQuality('High');
+function applyQuality(v){const s={Cinematic:[1.0,true,.0015],High:[1.0,true,.0018],Balanced:[1.12,false,.0022],Performance:[1.28,false,.0028]}[v];engine.setHardwareScalingLevel(s[0]);pipe.bloomEnabled=s[1];scene.fogDensity=s[2]}
+quality.onchange=()=>applyQuality(quality.value);applyQuality('High');
 
-let fpsTimer=0;
-scene.onBeforeRenderObservable.add(()=>{
- const f=keys.w||keys.arrowup?-1:keys.s||keys.arrowdown?1:move.y;
- const str=keys.d||keys.arrowright?1:keys.a||keys.arrowleft?-1:move.x;
- const sp=keys.shift?camera.speed*1.7:camera.speed;
- let forward=camera.getDirection(B.Axis.Z);forward.y=0;forward.normalize();
- let right=camera.getDirection(B.Axis.X);right.y=0;right.normalize();
- camera.position.addInPlace(forward.scale(-f*sp));
- camera.position.addInPlace(right.scale(str*sp));
- camera.position.y=2.05;
- fpsTimer++;
- if(fpsTimer%20===0)info.textContent='Dealey Plaza · 1963  |  '+Math.round(engine.getFps())+' FPS';
-});
-for(const m of scene.meshes){
- if(m.material && m.name!=='Lawn'){
-  try{shadows.addShadowCaster(m,true)}catch(e){}
- }
-}
-engine.runRenderLoop(()=>scene.render());
-addEventListener('resize',()=>engine.resize());
-setTimeout(()=>info.textContent='Dealey Plaza · 1963 · Walk the reconstruction',1200);
+let frames=0;scene.onBeforeRenderObservable.add(()=>{const f=keys.w||keys.arrowup?-1:keys.s||keys.arrowdown?1:move.y;const str=keys.d||keys.arrowright?1:keys.a||keys.arrowleft?-1:move.x;const sp=keys.shift?camera.speed*1.7:camera.speed;let fw=camera.getDirection(B.Axis.Z);fw.y=0;fw.normalize();let rt=camera.getDirection(B.Axis.X);rt.y=0;rt.normalize();camera.position.addInPlace(fw.scale(-f*sp));camera.position.addInPlace(rt.scale(str*sp));camera.position.y=2.05;if(++frames%30===0)info.textContent='Dealey Plaza · 1963  |  '+Math.round(engine.getFps())+' FPS'});
+engine.runRenderLoop(()=>scene.render());addEventListener('resize',()=>engine.resize());
 })();
 </script>
 </body>
