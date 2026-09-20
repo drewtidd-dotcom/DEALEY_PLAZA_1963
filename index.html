@@ -59,9 +59,19 @@ M('street','#272a2b',.97);M('sidewalk','#8d8a81',.92);M('stone','#b8ad95',.82);M
 M('brick','#6f3e2d',.92);M('roof','#514c43',.95);M('grass','#526448',1);M('grass2','#667457',1);
 M('water','#557783',.18,.05);M('glass','#17272e',.08,.15);M('metal','#202223',.38,.7);
 M('tree','#3c5036',1);M('tree2','#526544',1);M('trunk','#493426',1);M('white','#ddd7c9',.7);
-M('red','#741c18',.36,.12);M('cream','#c4b397',.5,.05);M('blue','#354b57',.5,.08);\nM('interiorFloor','#6f6250',.92);M('interiorWall','#d8d0bd',.96);M('wood','#70563d',.82);M('cardboard','#9a6e3f',.96);M('iron','#3b3b37',.5,.65);
+M('red','#741c18',.36,.12);M('cream','#c4b397',.5,.05);M('blue','#354b57',.5,.08);
+M('interiorFloor','#6f6250',.92);M('interiorWall','#d8d0bd',.96);M('wood','#70563d',.82);M('cardboard','#9a6e3f',.96);M('iron','#3b3b37',.5,.65);
 
-function makeBrickTexture(){\n const t=new B.DynamicTexture('BrickTexture',{width:1024,height:1024},scene,true);\n const c=t.getContext();c.fillStyle='#6f3e2d';c.fillRect(0,0,1024,1024);\n const bw=96,bh=42; c.strokeStyle='rgba(35,18,13,.48)';c.lineWidth=5;\n for(let y=0;y<1024;y+=bh){c.beginPath();c.moveTo(0,y);c.lineTo(1024,y);c.stroke();const off=(Math.floor(y/bh)%2)*bw/2;for(let x=-off;x<1024;x+=bw){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+bh);c.stroke()}}\n t.update();return t;\n}\nconst brickTexture=makeBrickTexture();mats.brick.albedoTexture=brickTexture;mats.brick.bumpTexture=brickTexture;mats.brick.bumpTexture.level=.16;\n\nfunction matFor(kind){kind=(kind||'').toLowerCase();if(kind.includes('road'))return mats.street;if(kind.includes('foot'))return mats.sidewalk;if(kind.includes('grass'))return mats.grass;if(kind.includes('water'))return mats.water;return mats.stone}
+function makeBrickTexture(){
+ const t=new B.DynamicTexture('BrickTexture',{width:1024,height:1024},scene,true);
+ const c=t.getContext();c.fillStyle='#6f3e2d';c.fillRect(0,0,1024,1024);
+ const bw=96,bh=42; c.strokeStyle='rgba(35,18,13,.48)';c.lineWidth=5;
+ for(let y=0;y<1024;y+=bh){c.beginPath();c.moveTo(0,y);c.lineTo(1024,y);c.stroke();const off=(Math.floor(y/bh)%2)*bw/2;for(let x=-off;x<1024;x+=bw){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+bh);c.stroke()}}
+ t.update();return t;
+}
+const brickTexture=makeBrickTexture();mats.brick.albedoTexture=brickTexture;mats.brick.bumpTexture=brickTexture;mats.brick.bumpTexture.level=.16;
+
+function matFor(kind){kind=(kind||'').toLowerCase();if(kind.includes('road'))return mats.street;if(kind.includes('foot'))return mats.sidewalk;if(kind.includes('grass'))return mats.grass;if(kind.includes('water'))return mats.water;return mats.stone}
 function points(o){return o.outer||o.polygon||o.points||o.path||null}
 function center(ps){let x=0,z=0;for(const p of ps){x+=p[0];z+=p[1]}return new B.Vector3(x/ps.length,0,z/ps.length)}
 function poly(name,ps,y,h,material){
