@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Dealey Plaza: 1963</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080909;font-family:system-ui,sans-serif;color:#fff}
+#game{width:100%;height:100%;display:block;touch-action:none}
+#hud{position:fixed;inset:0;pointer-events:none}
+.top{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;gap:8px}
+.card{background:rgba(8,10,11,.72);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:9px 12px;font-size:12px;text-shadow:0 1px 2px #000}
+.title{font-weight:700;font-size:14px}.muted{opacity:.7}
+#quality{pointer-events:auto;background:#111;color:#fff;border:1px solid #555;border-radius:8px;padding:5px}
+#info{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);max-width:75%;text-align:center}
+#cross{position:absolute;left:50%;top:50%;width:14px;height:14px;transform:translate(-50%,-50%);opacity:.65}
+#cross:before,#cross:after{content:'';position:absolute;background:#fff}.cross:before{width:14px;height:1px;top:7px}.cross:after{height:14px;width:1px;left:7px}
+#hint{position:absolute;bottom:18px;left:14px;font-size:11px;opacity:.55}
+@media(min-width:900px){#hint:after{content:'  WASD = move • drag = look';}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+<div class="top"><div class="card"><div class="title">DEALEY PLAZA · 1963</div><div class="muted">Historical reconstruction / exploration</div></div>
+<div class="card">Quality <select id="quality"><option>Cinematic</option><option>High</option><option>Balanced</option><option>Performance</option></select></div></div>
+<div id="cross" class="cross"></div><div id="info" class="card">Loading Dealey Plaza…</div><div id="hint">Touch: left side move • right side look</div>
+</div>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script>
+(()=>{const canvas=document.getElementById('game'), info=document.getElementById('info'), q=document.getElementById('quality');
+if(!window.BABYLON){info.textContent='Renderer failed to load. Check your connection and reload.';return}
+const B=window.BABYLON, engine=new B.Engine(canvas,true,{antialias:true,preserveDrawingBuffer:false,stencil:true});
+engine.setHardwareScalingLevel(Math.min(1.35,Math.max(1,devicePixelRatio/1.5)));
+const scene=new B.Scene(engine); scene.clearColor=new B.Color4(.055,.065,.07,1);
+const camera=new B.UniversalCamera('Explorer',new B.Vector3(0,2.05,18),scene);
+camera.minZ=.05; camera.maxZ=900; camera.speed=.16; camera.angularSensibility=3200; camera.inertia=.7;
+camera.attachControl(canvas,true);
+const hemi=new B.HemisphericLight('Sky',new B.Vector3(0,1,0),scene); hemi.intensity=.78; hemi.diffuse=new B.Color3(.78,.83,.9);
+const sun=new B.DirectionalLight('Sun',new B.Vector3(-.35,-1,.5),scene); sun.position=new B.Vector3(70,100,40); sun.intensity=2.0;
+const fill=new B.PointLight('WarmFill',new B.Vector3(-30,15,20),scene); fill.intensity=55; fill.range=90; fill.diffuse=new B.Color3(1,.72,.5);
+const env=B.CubeTexture.CreateFromPrefilteredData('https://assets.babylonjs.com/environments/environmentSpecular.env',scene);
+scene.environmentTexture=env; scene.environmentIntensity=.55;
+const pipe=new B.DefaultRenderingPipeline('Cinematic',true,scene,[camera]); pipe.fxaaEnabled=true; pipe.imageProcessingEnabled=true; pipe.imageProcessing.exposure=1.05; pipe.imageProcessing.contrast=1.12; pipe.bloomEnabled=true; pipe.bloomThreshold=.82; pipe.bloomWeight=.08; pipe.bloomKernel=64;
+let shadows=new B.ShadowGenerator(1536,sun); shadows.useBlurExponentialShadowMap=true; shadows.blurKernel=32;
+const mats={}; function mat(n,c,rough=.8,metal=0){let m=new B.PBRMaterial(n,scene);m.albedoColor=B.Color3.FromHexString(c);m.roughness=rough;m.metallic=metal;m.environmentIntensity=.45;return mats[n]=m}
+mat('asphalt','#262829',.96);mat('concrete','#888681',.92);mat('limestone','#b9b09a',.86);mat('brick','#743f2d',.88);mat('grass','#536348',1);mat('leaf','#34452d',1);mat('bark','#4b3526',1);mat('paint','#202426',.48,.55);mat('chrome','#bfc5c2',.2,.9);mat('glass','#202a30',.12,.25);mat('red','#7e1713',.38,.15);mat('cream','#c4b59b',.52,.05);mat('white','#d5d0c2',.7);mat('sign','#314c58',.62,.15);
+function box(n,p,s,m,bev=.08){let x=B.MeshBuilder.CreateBox(n,{width:s[0],height:s[1],depth:s[2]},scene);x.position=p;x.material=m;if(bev){let mod=new B.BevelledBoxBuilder;};return x}
+function cyl(n,p,r,h,m,seg=16){let x=B.MeshBuilder.CreateCylinder(n,{diameter:r*2,height:h,tessellation:seg},scene);x.position=p;x.material=m;return x}
+function plane(n,p,s,m){let x=B.MeshBuilder.CreateGround(n,{width:s[0],height:s[1]},scene);x.position=p;x.material=m;return x}
+const ground=plane('PlazaGround',new B.Vector3(0,0,0),[110,110],mats.grass);
+box('MainRoad',new B.Vector3(0,.025,3),[105,.05,35],mats.asphalt,0);
+box('PlazaWalk',new B.Vector3(0,.07,-17),[54,.14,30],mats.concrete,0);
+for(let z of [-3,5,13]){for(let x=-45;x<=45;x+=6)box('LaneMark',new B.Vector3(x,.06,z),[3,.025,.16],mats.white,0)}
+function facade(){const root=new B.TransformNode('Depository',scene);root.position=new B.Vector3(0,0,-35);
+box('MainMass',new B.Vector3(0,10,0),[50,20,13],mats.limestone,0).parent=root;
+for(let floor=0;floor<5;floor++){for(let x=-22;x<=22;x+=4.4){let w=box('Window',new B.Vector3(x,3+floor*3.25,-6.65),[2.8,2.25,.22],mats.glass,0);w.parent=root;let sill=box('Sill',new B.Vector3(x,1.78+floor*3.25,-6.78),[3.05,.18,.35],mats.limestone,0);sill.parent=root}}
+for(let y=1;y<20;y+=3.1){let band=box('MasonryBand',new B.Vector3(0,y,-6.9),[50,.13,.18],mats.brick,0);band.parent=root}
+box('Roofline',new B.Vector3(0,20.7,0),[51,1.3,14],mats.limestone,0).parent=root;
+} facade();
+function peristyle(){let r=new B.TransformNode('Peristyle',scene);r.position=new B.Vector3(0,0,-7);
+box('Base',new B.Vector3(0,.45,0),[30,.9,8],mats.limestone,0).parent=r;box('Roof',new B.Vector3(0,7.3,0),[31,1.1,8.5],mats.limestone,0).parent=r;
+for(let i=-5;i<=5;i++){let c=cyl('Column',new B.Vector3(i*2.65,4,0),.72,6.7,mats.limestone,20);c.parent=r;let cap=cyl('Capital',new B.Vector3(i*2.65,7.15,0),1.05,.5,mats.limestone,20);cap.parent=r}
+box('RearWall',new B.Vector3(0,3.9,3.8),[30,7.8,.5],mats.brick,0).parent=r} peristyle();
+function tree(x,z,s=1){cyl('Trunk',new B.Vector3(x,2*s,z),.45*s,4*s,mats.bark,12);for(let i=0;i<7;i++){let a=i*Math.PI*2/7;let p=new B.Vector3(x+Math.cos(a)*1.7*s,4*s,z+Math.sin(a)*1.7*s);let l=cyl('Branch',new B.Vector3(x+(p.x-x)/2,3*s,z+(p.z-z)/2),.16*s,2.8*s,mats.bark,8);l.rotation.z=Math.cos(a)*.65;l.rotation.x=Math.sin(a)*.65;let f=B.MeshBuilder.CreateSphere('Foliage',{diameter:3.6*s,segments:12},scene);f.position=p;f.material=mats.leaf}}
+[[-24,-20],[-16,-18],[22,-19],[30,-8],[-32,6],[34,7],[-25,25],[28,25]].forEach(p=>tree(p[0],p[1],1.2));
+function car(x,z,rot=0,color='cream'){let r=new B.TransformNode('1963 Sedan',scene);r.position=new B.Vector3(x,.8,z);r.rotation.y=rot;let body=box('Body',new B.Vector3(0,.65,0),[4.8,1.25,2],mats[color],0);body.parent=r;let roof=box('Roof',new B.Vector3(0,1.45,-.05),[2.6,1.0,1.75],mats[color],0);roof.parent=r;let glass=box('Windows',new B.Vector3(0,1.48,-.08),[2.72,.72,1.78],mats.glass,0);glass.parent=r;for(let sx of [-1.8,1.8])for(let sz of [-.72,.72]){let w=cyl('Wheel',new B.Vector3(sx,0,sz),.48,.28,mats.paint,18);w.rotation.z=Math.PI/2;w.parent=r}return r}
+car(-15,8,.03,'red');car(14,12,Math.PI,'cream');car(7,2,-.12,'white');
+for(let x=-42;x<=42;x+=14){cyl('LampPole',new B.Vector3(x,4,-2),.09,8,mats.paint,12);let l=B.MeshBuilder.CreateSphere('Lamp',{diameter:.38,segments:12},scene);l.position=new B.Vector3(x,8,-2);l.material=mats.white}
+function sign(txt,pos){let p=B.MeshBuilder.CreatePlane('HistoricSign',{width:2.8,height:.75},scene);p.position=pos;p.rotation.y=Math.PI;p.material=mats.sign;let t=new B.DynamicTexture('signtext',{width:512,height:128},scene,true);t.hasAlpha=true;t.drawText(txt,null,82,'bold 48px Arial','#f4f0df','transparent',true);let sm=new B.StandardMaterial('signmat',scene);sm.diffuseTexture=t;sm.emissiveColor=new B.Color3(.2,.22,.2);p.material=sm}
+sign('DEALEY PLAZA',new B.Vector3(-11,2.5,-1));
+camera.position=new B.Vector3(0,2.05,18); camera.setTarget(new B.Vector3(0,2,-10));
+let keys={};window.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+let joy={x:0,y:0},look={id:null,x:0,y:0}; canvas.addEventListener('pointerdown',e=>{if(e.clientX<innerWidth*.48){joy.x=e.clientX/innerWidth*2-1;joy.y=e.clientY/innerHeight*2-1}else{look.id=e.pointerId;look.x=e.clientX;look.y=e.clientY}});canvas.addEventListener('pointermove',e=>{if(e.pointerId===look.id){let dx=e.clientX-look.x,dy=e.clientY-look.y;camera.rotation.y+=dx*.003;camera.rotation.x+=dy*.002;camera.rotation.x=B.Scalar.Clamp(camera.rotation.x,-1.35,1.35);look.x=e.clientX;look.y=e.clientY}else if(e.clientX<innerWidth*.48){joy.x=e.clientX/innerWidth*2-1;joy.y=e.clientY/innerHeight*2-1}});canvas.addEventListener('pointerup',e=>{if(e.pointerId===look.id)look.id=null;joy.x=joy.y=0});
+q.onchange=()=>{let v=q.value;let s=v==='Cinematic'?1536:v==='High'?1024:v==='Balanced'?768:512;shadows.getShadowMap().getLight().shadowMinZ=0.1;engine.setHardwareScalingLevel(v==='Cinematic'?1:devicePixelRatio>2?1.15:1);pipe.bloomEnabled=v==='Cinematic'||v==='High';pipe.depthOfFieldEnabled=v==='Cinematic';info.textContent='Quality: '+v+' · historical exploration'};
+scene.onBeforeRenderObservable.add(()=>{let f=keys.w||keys.arrowup?-1:keys.s||keys.arrowdown?1:joy.y;let str=keys.d||keys.arrowright?1:keys.a||keys.arrowleft?-1:joy.x;let sp=keys.shift?camera.speed*1.8:camera.speed;let forward=camera.getDirection(B.Axis.Z);forward.y=0;forward.normalize();let right=camera.getDirection(B.Axis.X);right.y=0;right.normalize();camera.position.addInPlace(forward.scale(-f*sp));camera.position.addInPlace(right.scale(str*sp));camera.position.y=2.05;info.textContent='Dealey Plaza · 1963  |  '+Math.round(engine.getFps())+' FPS'});
+for(const m of scene.meshes)if(m.name!=='Explorer'&&m.material&&m.material!==mats.grass)try{shadows.addShadowCaster(m,true)}catch(e){}
+engine.runRenderLoop(()=>scene.render());window.addEventListener('resize',()=>engine.resize());info.textContent='Dealey Plaza · 1963 · Walk the reconstruction';
+})();</script></body></html>
